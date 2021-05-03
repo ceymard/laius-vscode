@@ -1,0 +1,4 @@
+scopeName: source.laius
+name: laius
+patterns:
+    - include: "text.html.derivative"

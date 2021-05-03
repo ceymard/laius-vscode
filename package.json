@@ -1,0 +1,52 @@
+{
+    "name": "laius",
+    "displayName": "laius",
+    "description": "laius language",
+    "version": "0.0.1",
+    "publisher": "ceymard",
+    "engines": {
+        "vscode": "^1.24.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+  "activationEvents": [
+    "onStartupFinished"
+	],
+  "main": "out/extension.js",
+	"contributes": {
+		"languages": [
+			{
+				"id": "laius",
+				"extensions": [
+					".laius"
+				]
+			}
+		],
+    "grammars": [
+        {
+          "language": "laius",
+          "scopeName": "source.laius",
+          "path": "./syntaxes/laius.tmLanguage"
+        }
+    ],
+    "semanticTokenScopes": [
+      {
+        "language": "laius",
+        "scopes": {
+          "operator": ["keyword.operator.laius"]
+        }
+      }
+    ]
+
+	},
+    "configurationDefaults": {
+        "laius": {
+          "editor.semanticHighlighting.enabled": true
+        }
+      },
+    "devDependencies": {
+        "@types/node": "^15.0.1",
+        "@types/vscode": "^1.55.0"
+    }
+}

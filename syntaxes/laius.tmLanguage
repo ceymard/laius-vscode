@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>scopeName</key>
+    <string>source.laius</string>
+    <key>name</key>
+    <string>laius</string>
+    <key>patterns</key>
+    <array>
+      <dict>
+        <key>include</key>
+        <string>text.html.derivative</string>
+      </dict>
+    </array>
+  </dict>
+</plist>
