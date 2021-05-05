@@ -19,7 +19,13 @@
 			{
 				"id": "laius",
 				"extensions": [
-					".laius"
+					".laius", ".tpl", ".html"
+				]
+			},
+      {
+				"id": "laius-markdown",
+				"extensions": [
+					".md"
 				]
 			}
 		],
@@ -28,12 +34,29 @@
           "language": "laius",
           "scopeName": "source.laius",
           "path": "./syntaxes/laius.tmLanguage"
+        },
+        {
+          "language": "laius-markdown",
+          "scopeName": "source.laius-markdown",
+          "path": "./syntaxes/laius-markdown.tmLanguage"
         }
     ],
     "semanticTokenScopes": [
       {
         "language": "laius",
         "scopes": {
+          "string": ["string.laius"],
+          "variable": ["variable.laius"],
+          "property": ["property.laius"],
+          "operator": ["keyword.operator.laius"]
+        }
+      },
+      {
+        "language": "laius-markdown",
+        "scopes": {
+          "string": ["string.laius"],
+          "variable": ["variable.laius"],
+          "property": ["property.laius"],
           "operator": ["keyword.operator.laius"]
         }
       }

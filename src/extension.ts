@@ -4,34 +4,20 @@ import { Parser, TokenType, TokenModifier } from 'laius/module/parser'
 const tokenTypes = new Map<string, number>();
 const tokenModifiers = new Map<string, number>();
 
-let log = vscode.window.createOutputChannel('laius')
+// let log = vscode.window.createOutputChannel('laius')
 // log.appendLine(JSON.stringify())
 const legend = (function () {
 	const tokenTypesLegend = Object.keys(TokenType as any).filter(p => !(parseInt(p) >= 0))
-	// [
-	// 	'comment', 'string', 'keyword', 'number', 'regexp', 'operator', 'namespace',
-	// 	'type', 'struct', 'class', 'interface', 'enum', 'typeParameter', 'function',
-	// 	'method', 'macro', 'variable', 'parameter', 'property', 'label'
-	// ];
-	// tokenTypesLegend.forEach((tokenType, index) => tokenTypes.set(tokenType, index));
 
 	const tokenModifiersLegend = Object.keys(TokenModifier as any).filter(p => !(parseInt(p) >= 0))
-	log.appendLine(JSON.stringify(tokenModifiersLegend))
-
-	// const tokenModifiersLegend = [
-	// 	'declaration', 'documentation', 'readonly', 'static', 'abstract', 'deprecated',
-	// 	'modification', 'async'
-	// ];
-	// tokenModifiersLegend.forEach((tokenModifier, index) => tokenModifiers.set(tokenModifier, index));
+	// log.appendLine(JSON.stringify(tokenModifiersLegend))
 
 	return new vscode.SemanticTokensLegend(tokenTypesLegend, tokenModifiersLegend);
 })();
 
 export function activate(context: vscode.ExtensionContext) {
-	// log.appendLine('WTF')
 	let dp = new DocumentSemanticTokensProvider()
-	context.subscriptions.push(vscode.languages.registerDocumentSemanticTokensProvider(['laius', {language: 'html'}], dp, legend));
-	// context.subscriptions.push(vscode.languages.registerDocumentRangeSemanticTokensProvider(['laius', {language: 'html'}], dp, legend))
+	context.subscriptions.push(vscode.languages.registerDocumentSemanticTokensProvider(['laius', 'laius-markdown'], dp, legend));
 }
 
 interface IParsedToken {
@@ -41,6 +27,8 @@ interface IParsedToken {
 	tokenType: string;
 	tokenModifiers: string[];
 }
+
+let all_diags = new WeakMap<vscode.Uri, vscode.DiagnosticCollection>()
 
 class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTokensProvider {
 
@@ -58,6 +46,24 @@ class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTokensPro
 		let p = new Parser(document.getText())
 		p.parse()
 		// const allTokens = this._parseText(document.getText());
+
+		if (p.errors.length) {
+			// log.appendLine(`printing diagnostics (${p.errors.length})`)
+			let diags = all_diags.get(document.uri) ?? vscode.languages.createDiagnosticCollection('laius')
+			diags.clear()
+			let dgs = p.errors.map(e => {
+				return new vscode.Diagnostic(new vscode.Range(
+					new vscode.Position(e.range.start.line, e.range.start.character),
+					new vscode.Position(e.range.end.line, e.range.end.character),
+				), e.message)
+			})
+			diags.set(document.uri, dgs)
+			all_diags.set(document.uri, diags)
+		} else {
+			let diags = all_diags.get(document.uri)
+			if (diags) { diags.clear() }
+		}
+
 		const builder = new vscode.SemanticTokensBuilder();
 		// log.appendLine(JSON.stringify(p.semantic_tokens))
 		let s = p.semantic_tokens
@@ -65,75 +71,12 @@ class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTokensPro
 			let it = s[i]
 			builder.push(it.line, it.char, it.length, it.type, it.mods)
 		}
-
-		// allTokens.forEach((token) => {
-			// builder.push(token.line, token.startCharacter, token.length, this._encodeTokenType(token.tokenType), this._encodeTokenModifiers(token.tokenModifiers));
-		// });
 		return builder.build();
 	}
 
-	private _encodeTokenType(tokenType: string): number {
-		if (tokenTypes.has(tokenType)) {
-			return tokenTypes.get(tokenType)!;
-		} else if (tokenType === 'notInLegend') {
-			return tokenTypes.size + 2;
-		}
-		return 0;
-	}
-
-	private _encodeTokenModifiers(strTokenModifiers: string[]): number {
-		let result = 0;
-		for (let i = 0; i < strTokenModifiers.length; i++) {
-			const tokenModifier = strTokenModifiers[i];
-			if (tokenModifiers.has(tokenModifier)) {
-				result = result | (1 << tokenModifiers.get(tokenModifier)!);
-			} else if (tokenModifier === 'notInLegend') {
-				result = result | (1 << tokenModifiers.size + 2);
-			}
-		}
-		return result;
-	}
-
-	private _parseText(text: string): IParsedToken[] {
-		const r: IParsedToken[] = [];
-		log.appendLine('WHATTTT')
-		const lines = text.split(/\r\n|\r|\n/);
-		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i];
-			let currentOffset = 0;
-			do {
-				const openOffset = line.indexOf('[', currentOffset);
-				if (openOffset === -1) {
-					break;
-				}
-				const closeOffset = line.indexOf(']', openOffset);
-				if (closeOffset === -1) {
-					break;
-				}
-				const tokenData = this._parseTextToken(line.substring(openOffset + 1, closeOffset));
-				r.push({
-					line: i,
-					startCharacter: openOffset + 1,
-					length: closeOffset - openOffset - 1,
-					tokenType: tokenData.tokenType,
-					tokenModifiers: tokenData.tokenModifiers
-				});
-				currentOffset = closeOffset;
-			} while (true);
-		}
-		return r;
-	}
-
-	private _parseTextToken(text: string): { tokenType: string; tokenModifiers: string[]; } {
-		const parts = text.split('.');
-		return {
-			tokenType: parts[0],
-			tokenModifiers: parts.slice(1)
-		};
-	}
 }
 
 // const selector = { language: 'html', scheme: 'file' }; // register for all Java documents from the local file system
 
-log.appendLine('registering...')
+// log.appendLine('registering...')
 // vscode.languages.registerDocumentSemanticTokensProvider(selector, new DocumentSemanticTokensProvider(), legend);

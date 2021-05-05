@@ -1,0 +1,4 @@
+scopeName: source.laius-markdown
+name: laius-markdown
+patterns:
+    - include: "text.html.markdown"
