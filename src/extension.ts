@@ -1,32 +1,45 @@
 import * as vscode from 'vscode';
-import { Parser, TokenType, TokenModifier } from 'laius/module/parser'
+import { Parser, } from 'laius/module/parser'
 
-const tokenTypes = new Map<string, number>();
-const tokenModifiers = new Map<string, number>();
+let log = vscode.window.createOutputChannel('laius')
 
-// let log = vscode.window.createOutputChannel('laius')
-// log.appendLine(JSON.stringify())
 const legend = (function () {
-	const tokenTypesLegend = Object.keys(TokenType as any).filter(p => !(parseInt(p) >= 0))
+	const tokenTypesLegend = [
+		"string",
+		"keyword",
+		"operator",
+		"type",
+		"comment",
+		"variable",
+		"property",
+		"macro",
+		"namespace",
+		"function",
+		"number",
+		"parameter",
+	]
 
-	const tokenModifiersLegend = Object.keys(TokenModifier as any).filter(p => !(parseInt(p) >= 0))
-	// log.appendLine(JSON.stringify(tokenModifiersLegend))
+	const tokenModifiersLegend = [
+		"readonly",
+		"defaultLibrary",
+		"static",
+	]
 
 	return new vscode.SemanticTokensLegend(tokenTypesLegend, tokenModifiersLegend);
 })();
 
+
 export function activate(context: vscode.ExtensionContext) {
-	let dp = new DocumentSemanticTokensProvider()
-	context.subscriptions.push(vscode.languages.registerDocumentSemanticTokensProvider(['laius', 'laius-markdown'], dp, legend));
+	log.appendLine("Adding subscription")
+	context.subscriptions.push(
+		vscode.languages.registerDocumentSemanticTokensProvider(
+			['laius', 'laius-markdown'],
+			new DocumentSemanticTokensProvider(),
+			legend
+		)
+	);
 }
 
-interface IParsedToken {
-	line: number;
-	startCharacter: number;
-	length: number;
-	tokenType: string;
-	tokenModifiers: string[];
-}
 
 let all_diags = new WeakMap<vscode.Uri, vscode.DiagnosticCollection>()
 
@@ -42,8 +55,8 @@ class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTokensPro
 	// }
 
 	async provideDocumentSemanticTokens(document: vscode.TextDocument, token: vscode.CancellationToken): Promise<vscode.SemanticTokens> {
-		// log.appendLine('hello ??!')
-		let p = new Parser(document.getText())
+		log.appendLine('hello ??!')
+		let p = new Parser(document.getText(), undefined, true)
 		p.parse()
 		// const allTokens = this._parseText(document.getText());
 
@@ -75,8 +88,3 @@ class DocumentSemanticTokensProvider implements vscode.DocumentSemanticTokensPro
 	}
 
 }
-
-// const selector = { language: 'html', scheme: 'file' }; // register for all Java documents from the local file system
-
-// log.appendLine('registering...')
-// vscode.languages.registerDocumentSemanticTokensProvider(selector, new DocumentSemanticTokensProvider(), legend);
